@@ -158,12 +158,26 @@ statement:
         free($4);
     }
     | if_stmt { $$ = $1; }
-    | FOR LPAREN for_init SEMICOLON cond SEMICOLON for_incr RPAREN LBRACE statements_or_empty RBRACE {
+    | FOR LPAREN for_init SEMICOLON cond SEMICOLON for_incr RPAREN statement {
+        size_t len = strlen($8) + 100;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "    for (%s; %s; %s)\n%s", $3, $5, $7, $8);
+        $$ = out;
+        free($3); free($5); free($7); free($8);
+    }
+    | FOR LPAREN for_init SEMICOLON cond SEMICOLON for_incr RPAREN LBRACE statements_or_empty RBRACE { 
         size_t len = strlen($3) + strlen($5) + strlen($7) + strlen($10) + 100;
         char *out = (char*)malloc(len);
         snprintf(out, len, "    for (%s; %s; %s) {\n%s    }\n", $3, $5, $7, $10);
         $$ = out;
         free($3); free($5); free($7); free($10);
+    }
+    | WHILE LPAREN cond RPAREN statement {
+        size_t len = strlen($5) + 40;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "    while (%s)\n%s", $3, $5);
+        $$ = out;
+        free($3); free($5);
     }
     | WHILE LPAREN cond RPAREN LBRACE statements_or_empty RBRACE {
         size_t len = strlen($3) + strlen($6) + 40;
@@ -171,6 +185,13 @@ statement:
         snprintf(out, len, "    while (%s) {\n%s    }\n", $3, $6);
         $$ = out;
         free($3); free($6);
+    }
+    | DO statement WHILE LPAREN cond RPAREN SEMICOLON {
+        size_t len = strlen($2) + 50;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "    do\n%s while (%s);\n", $2, $5);
+        $$ = out;
+        free($2); free($5);
     }
     | DO LBRACE statements_or_empty RBRACE WHILE LPAREN cond RPAREN SEMICOLON {
         size_t len = strlen($3) + strlen($7) + 50;
