@@ -17,9 +17,6 @@
 "double"        { return DOUBLE; }
 "if"            { return IF; }
 "else"          { return ELSE; }
-"for"           { return FOR; }
-"while"         { return WHILE; }
-"do"            { return DO; }
 
 \"[^\"]*\"       { yylval.str = strdup(yytext); return STRLIT; }
 "("             { return LPAREN; }
@@ -36,14 +33,8 @@
 "/"             { return DIVIDE; }
 ">"             { return '>'; }
 "<"             { return '<'; }
-"=="            { return EQ; }
-"!="            { return NEQ; }
-"&&"            { return AND; }
-"||"            { return OR; }
-"--"            { return MINUSMINUS; }
-"++"            { return PLUSPLUS; }
-"<="            { return LE; }
-">="            { return GE; }
+"=="            { return ASSIGN; }
+"!="            { return '!'; }
 
 [A-Za-z_][A-Za-z0-9_]*   { yylval.str = strdup(yytext); return ID; }
 [0-9]+           { yylval.str = strdup(yytext); return NUMBER; }

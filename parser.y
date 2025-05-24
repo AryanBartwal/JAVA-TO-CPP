@@ -24,17 +24,8 @@ int yylex();
 %token <str> CHARLIT
 %token PLUS MINUS TIMES DIVIDE
 %token IF ELSE
-%token EQ NEQ
-%token AND OR
-%token FOR WHILE DO
-%token MINUSMINUS
-%token PLUSPLUS
-%token LE GE
-%token LT
 
-%type <str> program statements statement array_param expr cond statements_or_empty
-%type <str> if_stmt else_part block
-%type <str> for_init for_incr
+%type <str> program statements statement array_param expr cond
 
 %%
 
@@ -66,27 +57,8 @@ statements:
     | /* empty */ { $$ = strdup(""); }
 ;
 
-statements_or_empty:
-    statements { $$ = $1; }
-    | /* empty */ { $$ = strdup(""); }
-;
-
 statement:
     PRINT LPAREN STRLIT RPAREN SEMICOLON {
-        size_t len = strlen($3) + 30;
-        char *out = (char*)malloc(len);
-        snprintf(out, len, "    cout << %s << endl;\n", $3);
-        $$ = out;
-        free($3);
-    }
-    | PRINT LPAREN ID RPAREN SEMICOLON {
-        size_t len = strlen($3) + 30;
-        char *out = (char*)malloc(len);
-        snprintf(out, len, "    cout << %s << endl;\n", $3);
-        $$ = out;
-        free($3);
-    }
-    | PRINT LPAREN expr RPAREN SEMICOLON {
         size_t len = strlen($3) + 30;
         char *out = (char*)malloc(len);
         snprintf(out, len, "    cout << %s << endl;\n", $3);
@@ -157,128 +129,19 @@ statement:
         free($2);
         free($4);
     }
-    | if_stmt { $$ = $1; }
-    | FOR LPAREN for_init SEMICOLON cond SEMICOLON for_incr RPAREN LBRACE statements_or_empty RBRACE {
-        size_t len = strlen($3) + strlen($5) + strlen($7) + strlen($10) + 100;
+    | IF LPAREN cond RPAREN LBRACE statements RBRACE ELSE LBRACE statements RBRACE {
+        size_t len = strlen($3) + strlen($6) + strlen($10) + 50;
         char *out = (char*)malloc(len);
-        snprintf(out, len, "    for (%s; %s; %s) {\n%s    }\n", $3, $5, $7, $10);
+        snprintf(out, len, "    if (%s) {\n%s    } else {\n%s    }\n", $3, $6, $10);
         $$ = out;
-        free($3); free($5); free($7); free($10);
+        free($3); free($6); free($10);
     }
-    | WHILE LPAREN cond RPAREN LBRACE statements_or_empty RBRACE {
-        size_t len = strlen($3) + strlen($6) + 40;
+    | IF LPAREN cond RPAREN LBRACE statements RBRACE {
+        size_t len = strlen($3) + strlen($6) + 30;
         char *out = (char*)malloc(len);
-        snprintf(out, len, "    while (%s) {\n%s    }\n", $3, $6);
+        snprintf(out, len, "    if (%s) {\n%s    }\n", $3, $6);
         $$ = out;
         free($3); free($6);
-    }
-    | DO LBRACE statements_or_empty RBRACE WHILE LPAREN cond RPAREN SEMICOLON {
-        size_t len = strlen($3) + strlen($7) + 50;
-        char *out = (char*)malloc(len);
-        snprintf(out, len, "    do {\n%s    } while (%s);\n", $3, $7);
-        $$ = out;
-        free($3); free($7);
-    }
-    | WHILE LPAREN ID LT NUMBER RPAREN LBRACE statements_or_empty RBRACE {
-        size_t len = strlen($3) + strlen($5) + strlen($8) + 40;
-        char *out = (char*)malloc(len);
-        snprintf(out, len, "    while (%s < %s) {\n%s    }\n", $3, $5, $8);
-        $$ = out;
-        free($3); free($5); free($8);
-    }
-;
-
-for_init:
-    INT ID ASSIGN expr { 
-        size_t len = strlen($2) + strlen($4) + 10;
-        char *out = (char*)malloc(len);
-        snprintf(out, len, "int %s = %s", $2, $4);
-        $$ = out;
-        free($2); free($4);
-    }
-    | ID ASSIGN expr {
-        size_t len = strlen($1) + strlen($3) + 5;
-        char *out = (char*)malloc(len);
-        snprintf(out, len, "%s = %s", $1, $3);
-        $$ = out;
-        free($1); free($3);
-    }
-;
-
-for_incr:
-    ID ASSIGN expr {
-        size_t len = strlen($1) + strlen($3) + 5;
-        char *out = (char*)malloc(len);
-        snprintf(out, len, "%s = %s", $1, $3);
-        $$ = out;
-        free($1); free($3);
-    }
-    | ID PLUSPLUS {
-        size_t len = strlen($1) + 3;
-        char *out = (char*)malloc(len);
-        snprintf(out, len, "%s++", $1);
-        $$ = out;
-        free($1);
-    }
-    | ID MINUSMINUS {
-        size_t len = strlen($1) + 3;
-        char *out = (char*)malloc(len);
-        snprintf(out, len, "%s--", $1);
-        $$ = out;
-        free($1);
-    }
-    | ID PLUS PLUS {
-        size_t len = strlen($1) + 3;
-        char *out = (char*)malloc(len);
-        snprintf(out, len, "%s++", $1);
-        $$ = out;
-        free($1);
-    }
-    | ID MINUS MINUS {
-        size_t len = strlen($1) + 3;
-        char *out = (char*)malloc(len);
-        snprintf(out, len, "%s--", $1);
-        $$ = out;
-        free($1);
-    }
-;
-
-
-if_stmt:
-    IF LPAREN cond RPAREN block else_part {
-        size_t len = strlen($3) + strlen($5) + strlen($6) + 40;
-        char *out = (char*)malloc(len);
-        snprintf(out, len, "    if (%s) %s%s", $3, $5, $6);
-        $$ = out;
-        free($3); free($5); free($6);
-    }
-;
-
-else_part:
-    ELSE if_stmt {
-        size_t len = strlen($2) + 10;
-        char *out = (char*)malloc(len);
-        snprintf(out, len, "else %s", $2);
-        $$ = out;
-        free($2);
-    }
-    | ELSE block {
-        size_t len = strlen($2) + 10;
-        char *out = (char*)malloc(len);
-        snprintf(out, len, "else %s", $2);
-        $$ = out;
-        free($2);
-    }
-    | /* empty */ { $$ = strdup(""); }
-;
-
-block:
-    LBRACE statements_or_empty RBRACE {
-        size_t len = strlen($2) + 10;
-        char *out = (char*)malloc(len);
-        snprintf(out, len, "{\n%s    }\n", $2);
-        $$ = out;
-        free($2);
     }
 ;
 
@@ -332,47 +195,19 @@ cond:
         $$ = tmp;
         free($1); free($3);
     }
-    | expr LE expr {
-        size_t len = strlen($1) + strlen($3) + 5;
+    | expr ASSIGN ASSIGN expr {
+        size_t len = strlen($1) + strlen($4) + 5;
         char *tmp = (char*)malloc(len);
-        snprintf(tmp, len, "%s <= %s", $1, $3);
+        snprintf(tmp, len, "%s == %s", $1, $4);
         $$ = tmp;
-        free($1); free($3);
+        free($1); free($4);
     }
-    | expr GE expr {
-        size_t len = strlen($1) + strlen($3) + 5;
+    | expr '!' ASSIGN expr {
+        size_t len = strlen($1) + strlen($4) + 5;
         char *tmp = (char*)malloc(len);
-        snprintf(tmp, len, "%s >= %s", $1, $3);
+        snprintf(tmp, len, "%s != %s", $1, $4);
         $$ = tmp;
-        free($1); free($3);
-    }
-    | expr EQ expr {
-        size_t len = strlen($1) + strlen($3) + 5;
-        char *tmp = (char*)malloc(len);
-        snprintf(tmp, len, "%s == %s", $1, $3);
-        $$ = tmp;
-        free($1); free($3);
-    }
-    | expr NEQ expr {
-        size_t len = strlen($1) + strlen($3) + 5;
-        char *tmp = (char*)malloc(len);
-        snprintf(tmp, len, "%s != %s", $1, $3);
-        $$ = tmp;
-        free($1); free($3);
-    }
-    | cond AND cond {
-        size_t len = strlen($1) + strlen($3) + 6;
-        char *tmp = (char*)malloc(len);
-        snprintf(tmp, len, "%s && %s", $1, $3);
-        $$ = tmp;
-        free($1); free($3);
-    }
-    | cond OR cond {
-        size_t len = strlen($1) + strlen($3) + 6;
-        char *tmp = (char*)malloc(len);
-        snprintf(tmp, len, "%s || %s", $1, $3);
-        $$ = tmp;
-        free($1); free($3);
+        free($1); free($4);
     }
 ;
 
