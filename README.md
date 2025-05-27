@@ -8,6 +8,7 @@ This project converts a subset of Java code to C++ using a Flex/Bison-based conv
 - Windows OS
 - [win_flex](https://github.com/lexxmark/winflexbison) and [win_bison](https://github.com/lexxmark/winflexbison) (or compatible Flex/Bison for Windows)
 - g++ (MinGW or similar)
+- git (for cloning and version control)
 
 ### Build Instructions
 1. Open PowerShell in this folder.
@@ -47,10 +48,23 @@ g++ a.cpp -o a.exe
 
 ## Files
 - `lexer.l`, `parser.y`: Flex/Bison source for the converter
-- `java2cpp.exe`: The converter executable
+- `Makefile`: (optional) for building with `make` if you have it
 - `test.java`: Example Java file
-- `a.cpp`: Generated C++ file
-- `a.exe`: Compiled C++ executable
+- `README.md`: This file
 
 ## Clean Up
-Unneeded files (build artifacts, temp files) are not included in the repository.
+- Build artifacts (`java2cpp.exe`, `a.cpp`, `a.exe`) and temp files are not included in the repository.
+- To clean up, simply delete those files if present.
+
+## Version Control
+To push your changes to git:
+
+```powershell
+git add lexer.l parser.y README.md test.java Makefile
+# Remove build artifacts and temp files before committing
+if (Test-Path java2cpp.exe) { Remove-Item java2cpp.exe }
+if (Test-Path a.cpp) { Remove-Item a.cpp }
+if (Test-Path a.exe) { Remove-Item a.exe }
+git commit -m "Update: clean up and add instructions"
+git push
+```
