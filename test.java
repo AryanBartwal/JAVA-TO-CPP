@@ -38,10 +38,27 @@ public class test {
         } while (w > 0);
         for (int i = 0; i <= 2; i++) {
             for (int j = 0; j <= 2; j++) {
+                for(int k = 0; k <= 2; k++) {
+                    System.out.println(i * 100 + j * 10 + k);
+                }
                 System.out.println(i * 10 + j);
             }
         }
         
+        int s = 2;
+        switch (s) {
+            case 1:
+                System.out.println("One");
+                break;
+            case 2:
+                System.out.println("Two");
+                break;
+            case 3:
+                System.out.println("Three");
+                break;
+            default:
+                System.out.println("Other");
+        }
     }
 }
 

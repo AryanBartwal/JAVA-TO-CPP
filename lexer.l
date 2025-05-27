@@ -20,6 +20,10 @@
 "for"           { return FOR; }
 "while"         { return WHILE; }
 "do"            { return DO; }
+"switch"        { return SWITCH; }
+"case"          { return CASE; }
+"default"       { return DEFAULT; }
+"break"         { yylval.str = strdup(yytext); return BREAK; }
 
 \"[^\"]*\"       { yylval.str = strdup(yytext); return STRLIT; }
 "("             { return LPAREN; }
@@ -44,13 +48,18 @@
 "++"            { return PLUSPLUS; }
 "<="            { return LE; }
 ">="            { return GE; }
+":"             { return COLON; }
 
 [A-Za-z_][A-Za-z0-9_]*   { yylval.str = strdup(yytext); return ID; }
 [0-9]+           { yylval.str = strdup(yytext); return NUMBER; }
 [0-9]+\.[0-9]+[fF]?  { yylval.str = strdup(yytext); return FLOATNUM; }
 '[^']'           { yylval.str = strdup(yytext); return CHARLIT; }
 
-[ \t\n]+        { /* skip whitespace */ }
+[\n]            { yylineno++; }
+[ \t\r]+        { /* skip whitespace */ }
 .               { return *yytext; }
 
 %%
+
+
+int yywrap() { return 1; }

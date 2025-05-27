@@ -2,7 +2,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-void yyerror(const char *s) { fprintf(stderr, "Error: %s\n", s); }
+void yyerror(const char *s) { 
+    extern int yylineno;
+    extern char *yytext;
+    fprintf(stderr, "Error: %s at line %d, near token '%s'\n", s, yylineno, yytext);
+}
 int yylex();
 %}
 
@@ -31,10 +35,14 @@ int yylex();
 %token PLUSPLUS
 %token LE GE
 %token LT
+%token SWITCH CASE DEFAULT
+%token COLON
+%token BREAK
 
 %type <str> program statements statement array_param expr cond statements_or_empty
 %type <str> if_stmt else_part block
 %type <str> for_init for_incr
+%type <str> switch_stmt case_blocks case_block default_block
 
 %%
 
@@ -72,7 +80,10 @@ statements_or_empty:
 ;
 
 statement:
-    PRINT LPAREN STRLIT RPAREN SEMICOLON {
+    BREAK SEMICOLON {
+        $$ = strdup("        break;\n");
+    }
+    | PRINT LPAREN STRLIT RPAREN SEMICOLON {
         size_t len = strlen($3) + 30;
         char *out = (char*)malloc(len);
         snprintf(out, len, "    cout << %s << endl;\n", $3);
@@ -158,13 +169,6 @@ statement:
         free($4);
     }
     | if_stmt { $$ = $1; }
-    | FOR LPAREN for_init SEMICOLON cond SEMICOLON for_incr RPAREN statement {
-        size_t len = strlen($8) + 100;
-        char *out = (char*)malloc(len);
-        snprintf(out, len, "    for (%s; %s; %s)\n%s", $3, $5, $7, $8);
-        $$ = out;
-        free($3); free($5); free($7); free($8);
-    }
     | FOR LPAREN for_init SEMICOLON cond SEMICOLON for_incr RPAREN LBRACE statements_or_empty RBRACE { 
         size_t len = strlen($3) + strlen($5) + strlen($7) + strlen($10) + 100;
         char *out = (char*)malloc(len);
@@ -207,6 +211,7 @@ statement:
         $$ = out;
         free($3); free($5); free($8);
     }
+    | switch_stmt { $$ = $1; }
 ;
 
 for_init:
@@ -301,6 +306,49 @@ block:
         $$ = out;
         free($2);
     }
+;
+
+switch_stmt:
+    SWITCH LPAREN expr RPAREN LBRACE case_blocks default_block RBRACE {
+        size_t len = strlen($3) + strlen($6) + strlen($7) + 50;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "    switch (%s) {\n%s%s    }\n", $3, $6, $7);
+        $$ = out;
+        free($3); free($6); free($7);
+    }
+;
+
+case_blocks:
+    case_blocks case_block {
+        size_t len = strlen($1) + strlen($2) + 1;
+        char *out = (char*)malloc(len);
+        strcpy(out, $1);
+        strcat(out, $2);
+        $$ = out;
+        free($1); free($2);
+    }
+    | case_block { $$ = $1; }
+;
+
+case_block:
+    CASE expr COLON statements_or_empty {
+        size_t len = strlen($2) + strlen($4) + 30;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "    case %s:\n%s", $2, $4);
+        $$ = out;
+        free($2); free($4);
+    }
+;
+
+default_block:
+    DEFAULT COLON statements_or_empty {
+        size_t len = strlen($3) + 20;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "    default:\n%s", $3);
+        $$ = out;
+        free($3);
+    }
+    | /* empty */ { $$ = strdup(""); }
 ;
 
 expr:
