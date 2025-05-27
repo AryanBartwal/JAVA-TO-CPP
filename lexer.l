@@ -49,6 +49,7 @@
 "<="            { return LE; }
 ">="            { return GE; }
 ":"             { return COLON; }
+"\[\]"          { return ARR; }
 
 [A-Za-z_][A-Za-z0-9_]*   { yylval.str = strdup(yytext); return ID; }
 [0-9]+           { yylval.str = strdup(yytext); return NUMBER; }

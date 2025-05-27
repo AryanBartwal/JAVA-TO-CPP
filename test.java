@@ -1,5 +1,12 @@
 public class test {
+    public static void hello() {
+        System.out.println("Hello from method!");
+        int i=19;
+        System.out.println(i);
+    }
+
     public static void main(String[] args) {
+        hello();
         System.out.println("Hello, Java!");
         int x = 5;
         char c = 'A';

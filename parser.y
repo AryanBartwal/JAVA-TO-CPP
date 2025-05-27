@@ -2,6 +2,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+// Buffer for method definitions
+char method_buffer[65536] = "";
+void add_method(const char* code) {
+    strcat(method_buffer, code);
+}
 void yyerror(const char *s) { 
     extern int yylineno;
     extern char *yytext;
@@ -39,18 +44,90 @@ int yylex();
 %token COLON
 %token BREAK
 
-%type <str> program statements statement array_param expr cond statements_or_empty
+%type <str> program class_body class_members class_member method_def statements statement array_param expr cond statements_or_empty
 %type <str> if_stmt else_part block
 %type <str> for_init for_incr
 %type <str> switch_stmt case_blocks case_block default_block
+%type <str> type
 
 %%
 
 
 program:
-    PUBLIC CLASS ID LBRACE PUBLIC STATIC VOID MAIN LPAREN STRING array_param RPAREN LBRACE statements RBRACE RBRACE {
-        printf("#include <iostream>\nusing namespace std;\nint main() {\n%s    return 0;\n}\n", $14);
+    PUBLIC CLASS ID LBRACE class_body RBRACE {
+        printf("#include <iostream>\nusing namespace std;\n%s\n", $5);
     }
+;
+
+class_body:
+    class_members { $$ = $1; }
+;
+
+class_members:
+    class_member class_members {
+        size_t len = strlen($1) + strlen($2) + 1;
+        char *tmp = (char*)malloc(len);
+        strcpy(tmp, $1);
+        strcat(tmp, $2);
+        $$ = tmp;
+        free($1); free($2);
+    }
+    | /* empty */ { $$ = strdup(""); }
+;
+
+class_member:
+    method_def { $$ = $1; }
+    | PUBLIC STATIC VOID MAIN LPAREN STRING array_param RPAREN LBRACE statements RBRACE {
+        size_t len = strlen($10) + 64;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "int main() {\n%s    return 0;\n}\n", $10);
+        $$ = out;
+        free($10);
+    }
+;
+
+methods:
+    method_def methods { add_method($1); free($1); }
+    | /* empty */
+;
+
+method_def:
+    PUBLIC STATIC type ID LPAREN RPAREN LBRACE statements RBRACE {
+        size_t len = strlen($3) + strlen($4) + strlen($8) + 64;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "%s %s() {\n%s}\n\n", $3, $4, $8);
+        $$ = out;
+        free($3); free($4); free($8);
+    }
+    | PUBLIC STATIC type ID LPAREN STRING array_param RPAREN LBRACE statements RBRACE {
+        size_t len = strlen($3) + strlen($4) + strlen($7) + strlen($10) + 64;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "%s %s(std::string* %s) {\n%s}\n\n", $3, $4, $7, $10);
+        $$ = out;
+        free($3); free($4); free($7); free($10);
+    }
+    | PUBLIC STATIC type ID LPAREN RPAREN LBRACE RBRACE {
+        size_t len = strlen($3) + strlen($4) + 32;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "%s %s() {\n}\n\n", $3, $4);
+        $$ = out;
+        free($3); free($4);
+    }
+    | PUBLIC STATIC type ID LPAREN STRING array_param RPAREN LBRACE RBRACE {
+        size_t len = strlen($3) + strlen($4) + strlen($7) + 32;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "%s %s(std::string* %s) {\n}\n\n", $3, $4, $7);
+        $$ = out;
+        free($3); free($4); free($7);
+    }
+;
+
+type:
+    INT { $$ = strdup("int"); }
+    | FLOAT { $$ = strdup("float"); }
+    | DOUBLE { $$ = strdup("double"); }
+    | CHAR { $$ = strdup("char"); }
+    | VOID { $$ = strdup("void"); }
 ;
 
 array_param:
@@ -167,6 +244,13 @@ statement:
         $$ = out;
         free($2);
         free($4);
+    }
+    | ID LPAREN RPAREN SEMICOLON {
+        size_t len = strlen($1) + 16;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "    %s();\n", $1);
+        $$ = out;
+        free($1);
     }
     | if_stmt { $$ = $1; }
     | FOR LPAREN for_init SEMICOLON cond SEMICOLON for_incr RPAREN LBRACE statements_or_empty RBRACE { 
@@ -382,6 +466,13 @@ expr:
         snprintf(tmp, len, "%s / %s", $1, $3);
         $$ = tmp;
         free($1); free($3);
+    }
+    | ID LPAREN RPAREN {
+        size_t len = strlen($1) + 8;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "%s()", $1);
+        $$ = out;
+        free($1);
     }
 ;
 
