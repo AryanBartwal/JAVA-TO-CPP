@@ -22,7 +22,7 @@ g++ lex.yy.c parser.tab.c -o java2cpp.exe
 
 ### Usage
 1. Place your Java file (e.g., `test.java`) in this folder.
-2. Convert Java to C++:
+2. Convert Java to C++ (PowerShell, recommended):
 
 ```powershell
 Get-Content test.java | ./java2cpp.exe | Set-Content -Encoding ascii a.cpp
