@@ -43,12 +43,16 @@ int yylex();
 %token SWITCH CASE DEFAULT
 %token COLON
 %token BREAK
+%token COMMA
+%token RETURN
 
 %type <str> program class_body class_members class_member method_def statements statement array_param expr cond statements_or_empty
 %type <str> if_stmt else_part block
 %type <str> for_init for_incr
 %type <str> switch_stmt case_blocks case_block default_block
 %type <str> type
+%type <str> parameter_list parameter
+%type <str> expr_list
 
 %%
 
@@ -99,6 +103,13 @@ method_def:
         $$ = out;
         free($3); free($4); free($8);
     }
+    | PUBLIC STATIC type ID LPAREN parameter_list RPAREN LBRACE statements RBRACE {
+        size_t len = strlen($3) + strlen($4) + strlen($6) + strlen($9) + 64;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "%s %s(%s) {\n%s}\n\n", $3, $4, $6, $9);
+        $$ = out;
+        free($3); free($4); free($6); free($9);
+    }
     | PUBLIC STATIC type ID LPAREN STRING array_param RPAREN LBRACE statements RBRACE {
         size_t len = strlen($3) + strlen($4) + strlen($7) + strlen($10) + 64;
         char *out = (char*)malloc(len);
@@ -112,6 +123,13 @@ method_def:
         snprintf(out, len, "%s %s() {\n}\n\n", $3, $4);
         $$ = out;
         free($3); free($4);
+    }
+    | PUBLIC STATIC type ID LPAREN parameter_list RPAREN LBRACE RBRACE {
+        size_t len = strlen($3) + strlen($4) + strlen($6) + 32;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "%s %s(%s) {\n}\n\n", $3, $4, $6);
+        $$ = out;
+        free($3); free($4); free($6);
     }
     | PUBLIC STATIC type ID LPAREN STRING array_param RPAREN LBRACE RBRACE {
         size_t len = strlen($3) + strlen($4) + strlen($7) + 32;
@@ -128,6 +146,38 @@ type:
     | DOUBLE { $$ = strdup("double"); }
     | CHAR { $$ = strdup("char"); }
     | VOID { $$ = strdup("void"); }
+;
+
+parameter_list:
+    parameter { $$ = strdup($1); }
+    | parameter_list COMMA parameter {
+        size_t len = strlen($1) + strlen($3) + 3;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "%s, %s", $1, $3);
+        $$ = out;
+    }
+;
+
+parameter:
+    type ID {
+        size_t len = strlen($1) + strlen($2) + 2;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "%s %s", $1, $2);
+        $$ = out;
+        free($1);
+    }
+;
+
+expr_list:
+    expr { $$ = strdup($1); free($1); }
+    | expr COMMA expr_list {
+        size_t len = strlen($1) + strlen($3) + 2;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "%s, %s", $1, $3);
+        $$ = out;
+        free($1); free($3);
+    }
+    | /* empty */ { $$ = strdup(""); }
 ;
 
 array_param:
@@ -160,53 +210,65 @@ statement:
     BREAK SEMICOLON {
         $$ = strdup("        break;\n");
     }
-    | PRINT LPAREN STRLIT RPAREN SEMICOLON {
-        size_t len = strlen($3) + 30;
+    | RETURN expr SEMICOLON {
+        size_t len = strlen($2) + 16;
         char *out = (char*)malloc(len);
-        snprintf(out, len, "    cout << %s << endl;\n", $3);
+        snprintf(out, len, "    return %s;\n", $2);
         $$ = out;
-        free($3);
-    }
-    | PRINT LPAREN ID RPAREN SEMICOLON {
-        size_t len = strlen($3) + 30;
-        char *out = (char*)malloc(len);
-        snprintf(out, len, "    cout << %s << endl;\n", $3);
-        $$ = out;
-        free($3);
+        free($2);
     }
     | PRINT LPAREN expr RPAREN SEMICOLON {
-        size_t len = strlen($3) + 30;
-        char *out = (char*)malloc(len);
-        snprintf(out, len, "    cout << %s << endl;\n", $3);
-        $$ = out;
-        free($3);
+        // Convert Java string concatenation to C++ stream insertion
+        char* expr = $3;
+        // Replace all occurrences of ' + ' with ' << ' for cout
+        size_t len = strlen(expr) * 2 + 30; // enough for replacements
+        char* out = (char*)malloc(len);
+        out[0] = 0;
+        char* p = expr;
+        while (*p) {
+            char* plus = strstr(p, "+");
+            if (plus) {
+                strncat(out, p, plus - p);
+                strcat(out, " << ");
+                p = plus + 1;
+            } else {
+                strcat(out, p);
+                break;
+            }
+        }
+        size_t final_len = strlen(out) + 30;
+        char* final_out = (char*)malloc(final_len);
+        snprintf(final_out, final_len, "    cout << %s << endl;\n", out);
+        $$ = final_out;
+        free(expr);
+        free(out);
     }
-    | INT ID ASSIGN NUMBER SEMICOLON {
-        size_t len = strlen($2) + 30;
+    | INT ID ASSIGN expr SEMICOLON {
+        size_t len = strlen($2) + strlen($4) + 30;
         char *out = (char*)malloc(len);
         snprintf(out, len, "    int %s = %s;\n", $2, $4);
         $$ = out;
         free($2);
         free($4);
     }
-    | FLOAT ID ASSIGN FLOATNUM SEMICOLON {
-        size_t len = strlen($2) + 30;
+    | FLOAT ID ASSIGN expr SEMICOLON {
+        size_t len = strlen($2) + strlen($4) + 30;
         char *out = (char*)malloc(len);
         snprintf(out, len, "    float %s = %s;\n", $2, $4);
         $$ = out;
         free($2);
         free($4);
     }
-    | DOUBLE ID ASSIGN FLOATNUM SEMICOLON {
-        size_t len = strlen($2) + 30;
+    | DOUBLE ID ASSIGN expr SEMICOLON {
+        size_t len = strlen($2) + strlen($4) + 30;
         char *out = (char*)malloc(len);
         snprintf(out, len, "    double %s = %s;\n", $2, $4);
         $$ = out;
         free($2);
         free($4);
     }
-    | CHAR ID ASSIGN CHARLIT SEMICOLON {
-        size_t len = strlen($2) + 30;
+    | CHAR ID ASSIGN expr SEMICOLON {
+        size_t len = strlen($2) + strlen($4) + 30;
         char *out = (char*)malloc(len);
         snprintf(out, len, "    char %s = %s;\n", $2, $4);
         $$ = out;
@@ -221,36 +283,12 @@ statement:
         free($1);
         free($3);
     }
-    | DOUBLE ID ASSIGN expr SEMICOLON {
-        size_t len = strlen($2) + strlen($4) + 30;
+    | ID LPAREN expr_list RPAREN SEMICOLON {
+        size_t len = strlen($1) + strlen($3) + 16;
         char *out = (char*)malloc(len);
-        snprintf(out, len, "    double %s = %s;\n", $2, $4);
+        snprintf(out, len, "    %s(%s);\n", $1, $3);
         $$ = out;
-        free($2);
-        free($4);
-    }
-    | FLOAT ID ASSIGN expr SEMICOLON {
-        size_t len = strlen($2) + strlen($4) + 30;
-        char *out = (char*)malloc(len);
-        snprintf(out, len, "    float %s = %s;\n", $2, $4);
-        $$ = out;
-        free($2);
-        free($4);
-    }
-    | INT ID ASSIGN expr SEMICOLON {
-        size_t len = strlen($2) + strlen($4) + 30;
-        char *out = (char*)malloc(len);
-        snprintf(out, len, "    int %s = %s;\n", $2, $4);
-        $$ = out;
-        free($2);
-        free($4);
-    }
-    | ID LPAREN RPAREN SEMICOLON {
-        size_t len = strlen($1) + 16;
-        char *out = (char*)malloc(len);
-        snprintf(out, len, "    %s();\n", $1);
-        $$ = out;
-        free($1);
+        free($1); free($3);
     }
     | if_stmt { $$ = $1; }
     | FOR LPAREN for_init SEMICOLON cond SEMICOLON for_incr RPAREN LBRACE statements_or_empty RBRACE { 
@@ -439,6 +477,8 @@ expr:
     ID { $$ = strdup($1); free($1); }
     | NUMBER { $$ = strdup($1); free($1); }
     | FLOATNUM { $$ = strdup($1); free($1); }
+    | STRLIT { $$ = strdup($1); free($1); }
+    | CHARLIT { $$ = strdup($1); free($1); }
     | expr PLUS expr {
         size_t len = strlen($1) + strlen($3) + 4;
         char *tmp = (char*)malloc(len);
@@ -473,6 +513,13 @@ expr:
         snprintf(out, len, "%s()", $1);
         $$ = out;
         free($1);
+    }
+    | ID LPAREN expr_list RPAREN {
+        size_t len = strlen($1) + strlen($3) + 8;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "%s(%s)", $1, $3);
+        $$ = out;
+        free($1); free($3);
     }
 ;
 

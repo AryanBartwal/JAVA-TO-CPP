@@ -4,9 +4,15 @@ public class test {
         int i=19;
         System.out.println(i);
     }
+    public static int add(int a, int b) {
+        System.out.println("Adding " + a + " and " + b);
+        return a + b;
+    }
 
     public static void main(String[] args) {
         hello();
+        int sum = add(10, 20);
+        System.out.println("Sum: " + sum);
         System.out.println("Hello, Java!");
         int x = 5;
         char c = 'A';

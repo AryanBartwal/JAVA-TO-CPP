@@ -24,6 +24,7 @@
 "case"          { return CASE; }
 "default"       { return DEFAULT; }
 "break"         { yylval.str = strdup(yytext); return BREAK; }
+"return"        { return RETURN; }
 
 \"[^\"]*\"       { yylval.str = strdup(yytext); return STRLIT; }
 "("             { return LPAREN; }
@@ -50,6 +51,7 @@
 ">="            { return GE; }
 ":"             { return COLON; }
 "\[\]"          { return ARR; }
+","             { return COMMA; }
 
 [A-Za-z_][A-Za-z0-9_]*   { yylval.str = strdup(yytext); return ID; }
 [0-9]+           { yylval.str = strdup(yytext); return NUMBER; }
