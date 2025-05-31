@@ -45,6 +45,9 @@ int yylex();
 %token BREAK
 %token COMMA
 %token RETURN
+%token NEW
+%token EXTENDS
+%token DOT
 
 %type <str> program class_body class_members class_member method_def statements statement array_param expr cond statements_or_empty
 %type <str> if_stmt else_part block
@@ -53,14 +56,43 @@ int yylex();
 %type <str> type
 %type <str> parameter_list parameter
 %type <str> expr_list
+%type <str> opt_extends field_decl
+
+%left '.'
+%left LPAREN RPAREN
 
 %%
 
 
 program:
-    PUBLIC CLASS ID LBRACE class_body RBRACE {
-        printf("#include <iostream>\nusing namespace std;\n%s\n", $5);
+    class_defs { /* allow multiple top-level classes */ }
+;
+
+class_defs:
+    class_def class_defs { /* allow multiple classes */ }
+    | class_def { }
+;
+
+class_def:
+    PUBLIC CLASS ID opt_extends LBRACE class_body RBRACE {
+        if (strlen($4) > 0) {
+            printf("#include <iostream>\nusing namespace std;\nclass %s : public %s {\n%s\n};\n", $3, $4, $6);
+        } else {
+            printf("#include <iostream>\nusing namespace std;\nclass %s {\n%s\n};\n", $3, $6);
+        }
     }
+    | CLASS ID opt_extends LBRACE class_body RBRACE {
+        if (strlen($3) > 0) {
+            printf("class %s : public %s {\n%s\n};\n", $2, $3, $5);
+        } else {
+            printf("class %s {\n%s\n};\n", $2, $5);
+        }
+    }
+;
+
+opt_extends:
+    /* empty */ { $$ = strdup(""); }
+    | EXTENDS ID { $$ = strdup($2); }
 ;
 
 class_body:
@@ -80,13 +112,59 @@ class_members:
 ;
 
 class_member:
-    method_def { $$ = $1; }
+    field_decl { $$ = $1; }
+    | method_def { $$ = $1; }
+    | type ID LPAREN parameter_list RPAREN LBRACE statements RBRACE {
+        size_t len = strlen($1) + strlen($2) + strlen($4) + strlen($7) + 64;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "%s %s(%s) {\n%s}\n\n", $1, $2, $4, $7);
+        $$ = out;
+        free($1); free($2); free($4); free($7);
+    }
+    | type ID LPAREN RPAREN LBRACE statements RBRACE {
+        size_t len = strlen($1) + strlen($2) + strlen($6) + 64;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "%s %s() {\n%s}\n\n", $1, $2, $6);
+        $$ = out;
+        free($1); free($2); free($6);
+    }
+    | PUBLIC type ID LPAREN parameter_list RPAREN LBRACE statements RBRACE {
+        size_t len = strlen($2) + strlen($3) + strlen($5) + strlen($8) + 64;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "%s %s(%s) {\n%s}\n\n", $2, $3, $5, $8);
+        $$ = out;
+        free($2); free($3); free($5); free($8);
+    }
+    | PUBLIC type ID LPAREN RPAREN LBRACE statements RBRACE {
+        size_t len = strlen($2) + strlen($3) + strlen($7) + 64;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "%s %s() {\n%s}\n\n", $2, $3, $7);
+        $$ = out;
+        free($2); free($3); free($7);
+    }
     | PUBLIC STATIC VOID MAIN LPAREN STRING array_param RPAREN LBRACE statements RBRACE {
         size_t len = strlen($10) + 64;
         char *out = (char*)malloc(len);
         snprintf(out, len, "int main() {\n%s    return 0;\n}\n", $10);
         $$ = out;
         free($10);
+    }
+;
+
+field_decl:
+    type ID SEMICOLON {
+        size_t len = strlen($1) + strlen($2) + 16;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "    %s %s;\n", $1, $2);
+        $$ = out;
+        free($1); free($2);
+    }
+    | type ID ASSIGN expr SEMICOLON {
+        size_t len = strlen($1) + strlen($2) + strlen($4) + 32;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "    %s %s = %s;\n", $1, $2, $4);
+        $$ = out;
+        free($1); free($2); free($4);
     }
 ;
 
@@ -146,6 +224,8 @@ type:
     | DOUBLE { $$ = strdup("double"); }
     | CHAR { $$ = strdup("char"); }
     | VOID { $$ = strdup("void"); }
+    | STRING { $$ = strdup("std::string"); }
+    | ID { $$ = $1; } // Allow user-defined types
 ;
 
 parameter_list:
@@ -166,12 +246,33 @@ parameter:
         $$ = out;
         free($1);
     }
+    | type ARR ID {
+        size_t len = strlen($1) + strlen($3) + 4;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "%s* %s", $1, $3);
+        $$ = out;
+        free($1);
+    }
+    | type LSQUARE RSQUARE ID {
+        size_t len = strlen($1) + strlen($4) + 4;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "%s* %s", $1, $4);
+        $$ = out;
+        free($1);
+    }
+    | type ID LSQUARE RSQUARE {
+        size_t len = strlen($1) + strlen($2) + 4;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "%s* %s", $1, $2);
+        $$ = out;
+        free($1);
+    }
 ;
 
 expr_list:
     expr { $$ = strdup($1); free($1); }
-    | expr COMMA expr_list {
-        size_t len = strlen($1) + strlen($3) + 2;
+    | expr_list COMMA expr {
+        size_t len = strlen($1) + strlen($3) + 3;
         char *out = (char*)malloc(len);
         snprintf(out, len, "%s, %s", $1, $3);
         $$ = out;
@@ -207,7 +308,56 @@ statements_or_empty:
 ;
 
 statement:
-    BREAK SEMICOLON {
+    type ID SEMICOLON {
+        size_t len = strlen($1) + strlen($2) + 16;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "    %s %s;\n", $1, $2);
+        $$ = out;
+        free($1); free($2);
+    }
+    | type ID ASSIGN expr SEMICOLON {
+        size_t len = strlen($1) + strlen($2) + strlen($4) + 32;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "    %s %s = %s;\n", $1, $2, $4);
+        $$ = out;
+        free($1); free($2); free($4);
+    }
+    | type ARR ID ASSIGN LBRACE expr_list RBRACE SEMICOLON {
+        size_t len = strlen($1) + strlen($3) + strlen($6) + 32;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "    %s %s[] = {%s};\n", $1, $3, $6);
+        $$ = out;
+        free($1); free($3); free($6);
+    }
+    | type LSQUARE RSQUARE ID ASSIGN LBRACE expr_list RBRACE SEMICOLON {
+        size_t len = strlen($1) + strlen($4) + strlen($7) + 32;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "    %s %s[] = {%s};\n", $1, $4, $7);
+        $$ = out;
+        free($1); free($4); free($7);
+    }
+    | type ID LSQUARE RSQUARE ASSIGN LBRACE expr_list RBRACE SEMICOLON {
+        size_t len = strlen($1) + strlen($2) + strlen($7) + 32;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "    %s %s[] = {%s};\n", $1, $2, $7);
+        $$ = out;
+        free($1); free($2); free($7);
+    }
+    | type ID LSQUARE NUMBER RSQUARE ASSIGN LBRACE expr_list RBRACE SEMICOLON {
+        size_t len = strlen($1) + strlen($2) + strlen($4) + strlen($8) + 40;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "    %s %s[%s] = {%s};\n", $1, $2, $4, $8);
+        $$ = out;
+        free($1); free($2); free($4); free($8);
+    }
+    | type ID ASSIGN NEW ID LPAREN expr_list RPAREN SEMICOLON {
+        size_t len = strlen($1) + strlen($2) + strlen($5) + strlen($7) + 40;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "    %s %s = new %s(%s);\n", $1, $2, $5, $7);
+        $$ = out;
+        free($1); free($2); free($5); free($7);
+    }
+    | BREAK SEMICOLON {
         $$ = strdup("        break;\n");
     }
     | RETURN expr SEMICOLON {
@@ -275,20 +425,26 @@ statement:
         free($2);
         free($4);
     }
-    | ID ASSIGN expr SEMICOLON {
+    | expr ASSIGN expr SEMICOLON {
         size_t len = strlen($1) + strlen($3) + 10;
         char *out = (char*)malloc(len);
         snprintf(out, len, "    %s = %s;\n", $1, $3);
         $$ = out;
-        free($1);
-        free($3);
+        free($1); free($3);
     }
-    | ID LPAREN expr_list RPAREN SEMICOLON {
+    | expr LPAREN expr_list RPAREN SEMICOLON {
         size_t len = strlen($1) + strlen($3) + 16;
         char *out = (char*)malloc(len);
         snprintf(out, len, "    %s(%s);\n", $1, $3);
         $$ = out;
         free($1); free($3);
+    }
+    | expr LPAREN RPAREN SEMICOLON {
+        size_t len = strlen($1) + 16;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "    %s();\n", $1);
+        $$ = out;
+        free($1);
     }
     | if_stmt { $$ = $1; }
     | FOR LPAREN for_init SEMICOLON cond SEMICOLON for_incr RPAREN LBRACE statements_or_empty RBRACE { 
@@ -507,21 +663,36 @@ expr:
         $$ = tmp;
         free($1); free($3);
     }
-    | ID LPAREN RPAREN {
-        size_t len = strlen($1) + 8;
+    | NEW ID LPAREN expr_list RPAREN {
+        size_t len = strlen($2) + strlen($4) + 16;
         char *out = (char*)malloc(len);
-        snprintf(out, len, "%s()", $1);
+        snprintf(out, len, "new %s(%s)", $2, $4);
         $$ = out;
-        free($1);
+        free($2); free($4);
     }
-    | ID LPAREN expr_list RPAREN {
+    | expr DOT ID { // member access
+        size_t len = strlen($1) + strlen($3) + 2;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "%s.%s", $1, $3);
+        $$ = out;
+        free($1); free($3);
+    }
+    | expr LPAREN expr_list RPAREN { // method call on object
         size_t len = strlen($1) + strlen($3) + 8;
         char *out = (char*)malloc(len);
         snprintf(out, len, "%s(%s)", $1, $3);
         $$ = out;
         free($1); free($3);
     }
+    | expr LPAREN RPAREN { // method call on object, no args
+        size_t len = strlen($1) + 8;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "%s()", $1);
+        $$ = out;
+        free($1);
+    }
 ;
+
 
 cond:
     expr { $$ = strdup($1); free($1); }
