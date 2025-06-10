@@ -40,6 +40,7 @@ int yylex();
 %token BREAK
 %token COMMA
 %token RETURN
+%token NEW
 
 %type <str> program class_body class_members class_member method_def method_params param_list block stmts stmts_or_empty statement expr cond for_init for_incr switch_stmt case_blocks case_block default_block expr_list type if_stmt
 
@@ -135,7 +136,13 @@ type:
     | FLOAT { $$ = strdup("float"); }
     | DOUBLE { $$ = strdup("double"); }
     | CHAR { $$ = strdup("char"); }
-    | VOID { $$ = strdup("void"); }
+    | type LSQUARE RSQUARE {
+        size_t len = strlen($1) + 3;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "%s[]", $1);
+        $$ = out;
+        free($1);
+    }
 ;
 
 block:
@@ -166,7 +173,57 @@ stmts_or_empty:
 ;
 
 statement:
-    BREAK SEMICOLON {
+    ID LSQUARE expr RSQUARE ASSIGN expr SEMICOLON {
+        size_t len = strlen($1) + strlen($3) + strlen($6) + 20;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "    %s[%s] = %s;\n", $1, $3, $6);
+        $$ = out;
+        free($1); free($3); free($6);
+    }
+    | ID LSQUARE expr RSQUARE LSQUARE expr RSQUARE ASSIGN expr SEMICOLON {
+        size_t len = strlen($1) + strlen($3) + strlen($6) + strlen($9) + 30;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "    %s[%s][%s] = %s;\n", $1, $3, $6, $9);
+        $$ = out;
+        free($1); free($3); free($6); free($9);
+    }
+    | type ID ASSIGN expr SEMICOLON {
+        // If type ends with [] and expr is new int[...] => output C++ array
+        if (strcmp($1, "int[]") == 0 && strstr($4, "new int[")) {
+            // 1D array: int[] arr = new int[3]; => int arr[3];
+            char *size_start = strchr($4, '[') + 1;
+            char *size_end = strchr(size_start, ']');
+            char size[32] = {0};
+            strncpy(size, size_start, size_end - size_start);
+            size[ size_end - size_start ] = 0;
+            char *out = (char*)malloc(strlen($2) + strlen(size) + 20);
+            snprintf(out, strlen($2) + strlen(size) + 20, "    int %s[%s];\n", $2, size);
+            $$ = out;
+            free($1); free($2); free($4);
+        } else if (strcmp($1, "int[][]") == 0 && strstr($4, "new int[")) {
+            // 2D array: int[][] marks = new int[2][2]; => int marks[2][2];
+            char *first = strchr($4, '[') + 1;
+            char *mid = strchr(first, ']') + 1;
+            char *second = strchr(mid, '[') + 1;
+            char *second_end = strchr(second, ']');
+            char size1[32] = {0}, size2[32] = {0};
+            strncpy(size1, first, strchr(first, ']')-first);
+            size1[ strchr(first, ']')-first ] = 0;
+            strncpy(size2, second, second_end-second);
+            size2[ second_end-second ] = 0;
+            char *out = (char*)malloc(strlen($2) + strlen(size1) + strlen(size2) + 30);
+            snprintf(out, strlen($2) + strlen(size1) + strlen(size2) + 30, "    int %s[%s][%s];\n", $2, size1, size2);
+            $$ = out;
+            free($1); free($2); free($4);
+        } else {
+            size_t len = strlen($1) + strlen($2) + strlen($4) + 30;
+            char *out = (char*)malloc(len);
+            snprintf(out, len, "    %s %s = %s;\n", $1, $2, $4);
+            $$ = out;
+            free($1); free($2); free($4);
+        }
+    }
+    | BREAK SEMICOLON {
         char *out = (char*)malloc(16);
         snprintf(out, 16, "    break;\n");
         $$ = out;
@@ -449,6 +506,48 @@ expr:
         snprintf(out, len, "%s()", $1);
         $$ = out;
         free($1);
+    }
+    | ID LSQUARE expr RSQUARE {
+        size_t len = strlen($1) + strlen($3) + 4;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "%s[%s]", $1, $3);
+        $$ = out;
+        free($1); free($3);
+    }
+    | ID LSQUARE expr RSQUARE LSQUARE expr RSQUARE {
+        size_t len = strlen($1) + strlen($3) + strlen($6) + 7;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "%s[%s][%s]", $1, $3, $6);
+        $$ = out;
+        free($1); free($3); free($6);
+    }
+    | NEW type LSQUARE expr RSQUARE {
+        size_t len = strlen($2) + strlen($4) + 10;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "new %s[%s]", $2, $4);
+        $$ = out;
+        free($2); free($4);
+    }
+    | NEW type LSQUARE expr RSQUARE LSQUARE expr RSQUARE {
+        size_t len = strlen($2) + strlen($4) + strlen($7) + 15;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "new %s[%s][%s]", $2, $4, $7);
+        $$ = out;
+        free($2); free($4); free($7);
+    }
+    | INT LSQUARE RSQUARE ID ASSIGN NEW INT LSQUARE expr RSQUARE SEMICOLON {
+        size_t len = strlen($4) + strlen($9) + 50;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "    int %s[] = new int[%s];\n", $4, $9);
+        $$ = out;
+        free($4); free($9);
+    }
+    | INT LSQUARE RSQUARE LSQUARE RSQUARE ID ASSIGN NEW INT LSQUARE expr RSQUARE LSQUARE expr RSQUARE SEMICOLON {
+        size_t len = strlen($6) + strlen($11) + strlen($14) + 80;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "    int %s[][] = new int[%s][%s];\n", $6, $11, $14);
+        $$ = out;
+        free($6); free($11); free($14);
     }
 ;
 
