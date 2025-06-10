@@ -68,3 +68,54 @@ if (Test-Path a.exe) { Remove-Item a.exe }
 git commit -m "Update: clean up and add instructions"
 git push
 ```
+
+# Java-to-C++ Array Converter
+
+This project converts Java code (including 1D and 2D arrays, assignments, and loops) to valid C++ code.
+
+## Features
+- Converts Java array declarations (e.g., `int[] arr = new int[5];`, `int[][] mat = new int[2][3];`) to valid C++ (`int arr[5];`, `int mat[2][3];`).
+- Handles array assignments and accesses.
+- Supports for-loops, nested loops, and printing array elements.
+- Output C++ code is ready to compile and run with g++.
+
+## Usage
+1. Place your Java file (e.g., `test_array.java`) in the project directory.
+2. Run the converter:
+   ```
+   Get-Content test_array.java | .\java2cpp.exe
+   ```
+3. Compile the generated C++ code:
+   ```
+   g++ -o output_array.exe output.cpp
+   ```
+4. Run the executable:
+   ```
+   .\output_array.exe
+   ```
+
+## Example
+Java input:
+```java
+int[] arr = new int[5];
+for (int i = 0; i < 5; i++) arr[i] = i * 2;
+```
+C++ output:
+```cpp
+int arr[5];
+for (int i = 0; i < 5; i++) arr[i] = i * 2;
+```
+
+## Limitations
+- Only supports basic Java syntax (no objects, no advanced collections).
+- Only 1D and 2D arrays of primitive types are supported.
+- No support for Java ArrayList, String[], or user-defined classes.
+
+## Recent Changes
+- Fixed grammar and code generation for 1D and 2D arrays.
+- Output C++ code is now always valid for array logic.
+- Example test files: `test_array.java`, `output.cpp`.
+
+---
+
+For more features or bug reports, open an issue or contact the maintainer.
