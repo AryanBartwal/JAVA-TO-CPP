@@ -42,7 +42,7 @@ int yylex();
 %token RETURN
 %token NEW
 
-%type <str> program class_body class_members class_member method_def method_params param_list block stmts stmts_or_empty statement expr cond for_init for_incr switch_stmt case_blocks case_block default_block expr_list type if_stmt
+%type <str> program method_seq method_def method_params param_list block stmts stmts_or_empty statement expr cond for_init for_incr switch_stmt case_blocks case_block default_block expr_list type if_stmt
 
 %start program
 
@@ -53,7 +53,7 @@ int yylex();
 
 
 program:
-    PUBLIC CLASS ID LBRACE class_body RBRACE {
+    PUBLIC CLASS ID LBRACE method_seq RBRACE {
         FILE *f = fopen("output.cpp", "w");
         if (f) {
             fprintf(f, "#include <iostream>\nusing namespace std;\n%s\n", $5);
@@ -65,31 +65,16 @@ program:
     }
 ;
 
-class_body:
-    class_members { $$ = $1; }
-;
-
-class_members:
-    class_member class_members {
-        size_t len = strlen($1) + strlen($2) + 1;
-        char *tmp = (char*)malloc(len);
-        strcpy(tmp, $1);
-        strcat(tmp, $2);
-        $$ = tmp;
+method_seq:
+    method_def method_seq {
+        size_t len = strlen($1) + strlen($2) + 2;
+        char *out = (char*)malloc(len);
+        strcpy(out, $1);
+        strcat(out, $2);
+        $$ = out;
         free($1); free($2);
     }
-    | /* empty */ { $$ = strdup(""); }
-;
-
-class_member:
-    method_def { $$ = $1; }
-    | PUBLIC STATIC VOID MAIN LPAREN STRING LSQUARE RSQUARE ID RPAREN block {
-        size_t len = strlen($11) + 64;
-        char *out = (char*)malloc(len);
-        snprintf(out, len, "int main() %s\n", $11);
-        $$ = out;
-        free($11);
-    }
+    | method_def { $$ = $1; }
 ;
 
 method_def:
@@ -106,6 +91,41 @@ method_def:
         snprintf(out, len, "%s %s() %s\n\n", $3, $4, $7);
         $$ = out;
         free($3); free($4); free($7);
+    }
+    | PUBLIC STATIC VOID MAIN LPAREN STRING LSQUARE RSQUARE ID RPAREN block {
+        size_t len = strlen($11) + 64;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "int main() %s\n", $11);
+        $$ = out;
+        free($11);
+    }
+    | type ID LPAREN method_params RPAREN block {
+        size_t len = strlen($1) + strlen($2) + strlen($4) + strlen($6) + 64;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "%s %s(%s) %s\n\n", $1, $2, $4, $6);
+        $$ = out;
+        free($1); free($2); free($4); free($6);
+    }
+    | type ID LPAREN RPAREN block {
+        size_t len = strlen($1) + strlen($2) + strlen($5) + 32;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "%s %s() %s\n\n", $1, $2, $5);
+        $$ = out;
+        free($1); free($2); free($5);
+    }
+    | VOID ID LPAREN method_params RPAREN block {
+        size_t len = strlen($2) + strlen($4) + strlen($6) + 64;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "void %s(%s) %s\n\n", $2, $4, $6);
+        $$ = out;
+        free($2); free($4); free($6);
+    }
+    | VOID ID LPAREN RPAREN block {
+        size_t len = strlen($2) + strlen($5) + 32;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "void %s() %s\n\n", $2, $5);
+        $$ = out;
+        free($2); free($5);
     }
 ;
 
@@ -136,6 +156,7 @@ type:
     | FLOAT { $$ = strdup("float"); }
     | DOUBLE { $$ = strdup("double"); }
     | CHAR { $$ = strdup("char"); }
+    | VOID { $$ = strdup("void"); }
     | type LSQUARE RSQUARE {
         size_t len = strlen($1) + 3;
         char *out = (char*)malloc(len);
@@ -188,33 +209,41 @@ statement:
         free($1); free($3); free($6); free($9);
     }
     | type ID ASSIGN expr SEMICOLON {
-        // If type ends with [] and expr is new int[...] => output C++ array
-        if (strcmp($1, "int[]") == 0 && strstr($4, "new int[")) {
+        // Enhanced: handle 1D and 2D array declarations
+        if (strstr($1, "[][]") && strstr($4, "new ")) {
+            // 2D array: int[][] mat = new int[2][3]; => int mat[2][3];
+            char *type_c = strdup($1);
+            char *bracket = strstr(type_c, "[][]");
+            if (bracket) *bracket = '\0';
+            // Find first and second dimension
+            char *size1_start = strchr($4, '[') + 1;
+            char *size1_end = strchr(size1_start, ']');
+            char size1[32] = {0};
+            strncpy(size1, size1_start, size1_end - size1_start);
+            size1[size1_end - size1_start] = 0;
+            char *size2_start = strchr(size1_end + 1, '[') + 1;
+            char *size2_end = strchr(size2_start, ']');
+            char size2[32] = {0};
+            strncpy(size2, size2_start, size2_end - size2_start);
+            size2[size2_end - size2_start] = 0;
+            char *out = (char*)malloc(strlen(type_c) + strlen($2) + strlen(size1) + strlen(size2) + 30);
+            snprintf(out, strlen(type_c) + strlen($2) + strlen(size1) + strlen(size2) + 30, "    %s %s[%s][%s];\n", type_c, $2, size1, size2);
+            $$ = out;
+            free(type_c); free($1); free($2); free($4);
+        } else if (strstr($1, "[]") && strstr($4, "new ")) {
             // 1D array: int[] arr = new int[3]; => int arr[3];
+            char *type_c = strdup($1);
+            char *bracket = strstr(type_c, "[]");
+            if (bracket) *bracket = '\0';
             char *size_start = strchr($4, '[') + 1;
             char *size_end = strchr(size_start, ']');
             char size[32] = {0};
             strncpy(size, size_start, size_end - size_start);
-            size[ size_end - size_start ] = 0;
-            char *out = (char*)malloc(strlen($2) + strlen(size) + 20);
-            snprintf(out, strlen($2) + strlen(size) + 20, "    int %s[%s];\n", $2, size);
+            size[size_end - size_start] = 0;
+            char *out = (char*)malloc(strlen(type_c) + strlen($2) + strlen(size) + 20);
+            snprintf(out, strlen(type_c) + strlen($2) + strlen(size) + 20, "    %s %s[%s];\n", type_c, $2, size);
             $$ = out;
-            free($1); free($2); free($4);
-        } else if (strcmp($1, "int[][]") == 0 && strstr($4, "new int[")) {
-            // 2D array: int[][] marks = new int[2][2]; => int marks[2][2];
-            char *first = strchr($4, '[') + 1;
-            char *mid = strchr(first, ']') + 1;
-            char *second = strchr(mid, '[') + 1;
-            char *second_end = strchr(second, ']');
-            char size1[32] = {0}, size2[32] = {0};
-            strncpy(size1, first, strchr(first, ']')-first);
-            size1[ strchr(first, ']')-first ] = 0;
-            strncpy(size2, second, second_end-second);
-            size2[ second_end-second ] = 0;
-            char *out = (char*)malloc(strlen($2) + strlen(size1) + strlen(size2) + 30);
-            snprintf(out, strlen($2) + strlen(size1) + strlen(size2) + 30, "    int %s[%s][%s];\n", $2, size1, size2);
-            $$ = out;
-            free($1); free($2); free($4);
+            free(type_c); free($1); free($2); free($4);
         } else {
             size_t len = strlen($1) + strlen($2) + strlen($4) + 30;
             char *out = (char*)malloc(len);
@@ -338,6 +367,13 @@ statement:
         size_t len = strlen($3) + strlen($5) + strlen($7) + strlen($9) + 100;
         char *out = (char*)malloc(len);
         snprintf(out, len, "    for (%s; %s; %s) %s\n", $3, $5, $7, $9);
+        $$ = out;
+        free($3); free($5); free($7); free($9);
+    }
+    | FOR LPAREN for_init SEMICOLON cond SEMICOLON for_incr RPAREN statement {
+        size_t len = strlen($3) + strlen($5) + strlen($7) + strlen($9) + 100;
+        char *out = (char*)malloc(len);
+        snprintf(out, len, "    for (%s; %s; %s)\n%s", $3, $5, $7, $9);
         $$ = out;
         free($3); free($5); free($7); free($9);
     }
@@ -548,6 +584,24 @@ expr:
         snprintf(out, len, "    int %s[][] = new int[%s][%s];\n", $6, $11, $14);
         $$ = out;
         free($6); free($11); free($14);
+    }
+    | type LSQUARE RSQUARE ID ASSIGN NEW type LSQUARE expr RSQUARE LSQUARE expr RSQUARE SEMICOLON {
+        // 2D array: int[][] mat = new int[2][3]; => int mat[2][3];
+        char *type_c = strdup($1);
+        char *size1_start = strchr($9, '[') + 1;
+        char *size1_end = strchr(size1_start, ']');
+        char size1[32] = {0};
+        strncpy(size1, size1_start, size1_end - size1_start);
+        size1[size1_end - size1_start] = 0;
+        char *size2_start = strchr($12, '[') + 1;
+        char *size2_end = strchr(size2_start, ']');
+        char size2[32] = {0};
+        strncpy(size2, size2_start, size2_end - size2_start);
+        size2[size2_end - size2_start] = 0;
+        char *out = (char*)malloc(strlen(type_c) + strlen($4) + strlen(size1) + strlen(size2) + 30);
+        snprintf(out, strlen(type_c) + strlen($4) + strlen(size1) + strlen(size2) + 30, "    %s %s[%s][%s];\n", type_c, $4, size1, size2);
+        $$ = out;
+        free(type_c); free($4); free($9); free($12);
     }
 ;
 

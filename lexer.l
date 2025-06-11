@@ -22,6 +22,7 @@
 "void"          { return VOID; }
 "main"          { return MAIN; }
 "String"        { return STRING; }
+"new"           { return NEW; }
 
 "("             { return LPAREN; }
 ")"             { return RPAREN; }
