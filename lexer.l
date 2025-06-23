@@ -2,7 +2,14 @@
 #include "parser.tab.h"
 %}
 
+%x COMMENT
+
 %%
+"//".*           { fprintf(yyout, "%s\n", yytext); }
+"/*"             { BEGIN(COMMENT); fprintf(yyout, "/*"); }
+<COMMENT>[^*]+   { fprintf(yyout, "%s", yytext); }
+<COMMENT>"*"+[^*/] { fprintf(yyout, "%s", yytext); }
+<COMMENT>"*"+"/" { fprintf(yyout, "*/\n"); BEGIN(INITIAL); }
 
 "int"           { return INT; }
 "char"          { return CHAR; }
@@ -34,8 +41,8 @@
 "-"             { return MINUS; }
 "*"             { return TIMES; }
 "/"             { return DIVIDE; }
-">"             { return GT; }
-"<"             { return LT; }
+">"             { return '>'; }
+"<"             { return '<'; }
 "=="            { return EQ; }
 "!="            { return NEQ; }
 "&&"            { return AND; }
@@ -63,6 +70,5 @@
 .               { /* ignore unknown characters */ }
 
 %%
-
 
 int yywrap() { return 1; }

@@ -1,0 +1,36 @@
+# Build artifacts
+*.exe
+java2cpp.exe
+a.exe
+test.exe
+test_default.exe
+
+# Generated files
+*.cpp
+a.cpp
+test.cpp
+test_default.cpp
+output.cpp
+
+# Flex/Bison generated files
+lex.yy.c
+parser.tab.c
+parser.tab.h
+
+# IDE files
+.vscode/
+.vs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# Debug files
+*.pdb
+*.obj
+*.o

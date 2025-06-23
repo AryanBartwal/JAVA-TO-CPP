@@ -1,4 +1,4 @@
-public class test {
+public class test_working {
     public static void hello() {
         System.out.println("Hello from method!");
         int i=19;
@@ -95,13 +95,6 @@ public class test {
                 System.out.println("Other");
                 System.out.println("Default case reached.");
                 int[] arrD = new int[3];
-                for (int iD = 0; iD < 3; iD++) 
-                {
-                    arrD[iD] = iD * 2;
-                }
-                for (int iD = 0; iD < 3; iD++) {
-                    System.out.println("arrD[" + iD + "] = " + arrD[iD]);
-                }
         }
     }
 }
