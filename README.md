@@ -1,6 +1,30 @@
 # Java-to-C++ Converter
 
-A comprehensive Java-to-C++ converter built with Flex/Bison that converts Java code to compilable, idiomatic C++ code.
+A comprehensive Java-to-C++ converter with both **command-line** and **web interface** built with Flex/Bison that converts Java code to compilable, idiomatic C++ code.
+
+## 🌐 **NEW: Web Interface**
+
+Experience the converter through our **beautiful, modern web interface** with dark theme glassmorphism design!
+
+### Quick Start (Web)
+```powershell
+# Start the web server
+npm install
+npm start
+# or
+node server.js
+```
+
+Then open your browser to: **http://localhost:3000**
+
+### Web Features
+- 🎨 **Modern Dark Theme**: Beautiful glassmorphism design with animated backgrounds
+- 📊 **Live Statistics**: Track conversions, success rate, and processing time
+- 💻 **Code Editor**: Syntax highlighting and real-time conversion
+- 📱 **Responsive Design**: Works perfectly on desktop, tablet, and mobile
+- ⚡ **Real-time Processing**: Instant Java-to-C++ conversion as you type
+- 🔄 **Reset Statistics**: Clear your conversion history with animation
+- 📋 **Copy to Clipboard**: Easy copying of generated C++ code
 
 ## 🚀 Features
 
@@ -31,8 +55,33 @@ A comprehensive Java-to-C++ converter built with Flex/Bison that converts Java c
 - **[WinFlexBison](https://github.com/lexxmark/winflexbison)**: win_flex and win_bison
 - **MinGW g++**: For compiling generated C++ code
 - **PowerShell**: For running build commands
+- **Node.js** (v14 or higher): For the web interface
 
-## 🔧 Installation & Build
+## 🔧 Installation & Setup
+
+### Option 1: Web Interface (Recommended)
+
+1. **Clone the repository**:
+```powershell
+git clone <your-repo-url>
+cd java-to-cpp
+```
+
+2. **Install dependencies**:
+```powershell
+npm install
+```
+
+3. **Start the web server**:
+```powershell
+npm start
+# or
+node server.js
+```
+
+4. **Open your browser** to: `http://localhost:3000`
+
+### Option 2: Command Line Interface
 
 1. **Clone the repository**:
 ```powershell
@@ -104,13 +153,19 @@ The repository includes comprehensive test files:
 
 ```
 java-to-cpp/
-├── lexer.l           # Flex lexical analyzer
-├── parser.y          # Bison parser grammar
-├── test.java         # Comprehensive test file
-├── ArrayTest.java    # Array operations test
-├── test_working.java # Verified working example
-├── Makefile          # Build automation
-└── README.md         # This documentation
+├── frontend/               # Web interface files
+│   ├── index.html         # Main web page
+│   ├── style.css          # Dark theme glassmorphism styles
+│   └── script.js          # Frontend JavaScript logic
+├── server.js              # Node.js web server
+├── package.json           # Node.js dependencies
+├── lexer.l                # Flex lexical analyzer
+├── parser.y               # Bison parser grammar
+├── test.java              # Comprehensive test file
+├── ArrayTest.java         # Array operations test
+├── test_array.java        # Array-specific test cases
+├── Makefile               # Build automation
+└── README.md              # This documentation
 ```
 
 ## 🎯 Supported Java Features
@@ -197,16 +252,37 @@ Remove-Item *.cpp, *.exe -ErrorAction SilentlyContinue
 ## 📋 Git Workflow
 
 ```powershell
-# Add source files to git
-git add lexer.l parser.y *.java README.md Makefile
+# Add important source files to git
+git add lexer.l parser.y *.java README.md Makefile frontend/ server.js package.json
 
 # Clean build artifacts before committing
 Remove-Item java2cpp.exe, *.cpp, *.exe, lex.yy.c, parser.tab.* -ErrorAction SilentlyContinue
 
 # Commit and push
-git commit -m "Update Java-to-C++ converter with array support"
+git commit -m "Add web interface with dark theme and update Java-to-C++ converter"
 git push origin main
 ```
+
+## 🌐 Web Interface Details
+
+### Modern Dark Theme
+- **Glassmorphism Design**: Beautiful blur effects and transparency
+- **Animated Background**: Floating particles and gradient shifts
+- **Responsive Layout**: Perfect on all devices and screen sizes
+- **Accessibility**: High contrast and keyboard navigation support
+
+### Features Overview
+- **Real-time Conversion**: See C++ output as you type Java code
+- **Statistics Tracking**: Monitor your conversion success rate
+- **Code Highlighting**: Syntax highlighting for better code readability
+- **Error Handling**: Clear error messages for debugging
+- **Performance Metrics**: Track processing time and efficiency
+
+### API Endpoints
+- `GET /`: Serve the main web interface
+- `POST /convert`: Convert Java code to C++ (JSON API)
+- `GET /stats`: Get conversion statistics
+- `POST /reset-stats`: Reset conversion statistics
 
 ## 🐛 Known Issues & Limitations
 
@@ -217,6 +293,7 @@ git push origin main
 
 ## 📈 Version History
 
+- **v3.0**: Added modern web interface with dark theme glassmorphism design, real-time conversion, and statistics tracking
 - **v2.0**: Added comprehensive array support and assignment operations
 - **v1.5**: Improved switch/case statement handling with proper scoping
 - **v1.2**: Fixed string concatenation conversion to C++ streams

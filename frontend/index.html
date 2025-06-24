@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Java to C++ Converter</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Prism.js for syntax highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css" rel="stylesheet" />
+</head>
+<body>
+    <div class="container">        <header class="header">
+            <h1 class="title">Java to C++ Converter</h1>
+            <p class="subtitle">🚀 Convert your Java code to C++ instantly with modern AI-powered translation</p>
+        </header>
+
+        <div class="converter-section">
+            <div class="input-section">                <div class="section-header">
+                    <h2>☕ Java Code</h2>
+                    <div class="buttons">
+                        <button id="clear-input" class="btn btn-secondary">🗑️ Clear</button>
+                        <button id="load-example" class="btn btn-secondary">📁 Load Example</button>
+                    </div>
+                </div>
+                <textarea id="java-input" placeholder="Enter your Java code here..."></textarea>
+            </div>            <div class="convert-section">
+                <button id="convert-btn" class="btn btn-primary">
+                    <span class="btn-text">✨ Convert to C++</span>
+                    <span class="btn-icon">🚀</span>
+                </button>
+            </div>
+
+            <div class="output-section">                <div class="section-header">
+                    <h2>⚡ C++ Code</h2>                    <div class="buttons">
+                        <button id="copy-output" class="btn btn-secondary">📋 Copy</button>
+                        <button id="download-output" class="btn btn-secondary">💾 Download</button>
+                        <button id="export-report" class="btn btn-secondary">📄 Export Report</button>
+                    </div>
+                </div>
+                <textarea id="cpp-output" placeholder="C++ code will appear here..." readonly></textarea>
+            </div>        </div>
+
+        <div class="execution-section">
+            <h3>Execution Output</h3>
+            <div class="execution-grid">
+                <div class="java-execution">                    <div class="section-header">
+                        <h4>☕ Java Output</h4>
+                        <div class="buttons">
+                            <button id="run-java" class="btn btn-secondary">▶️ Run Java</button>
+                            <button id="clear-java-output" class="btn btn-secondary">🧹 Clear</button>
+                        </div>
+                    </div>
+                    <div class="output-console" id="java-console">
+                        <div class="console-content" id="java-output">Click "Run Java" to execute the Java code</div>
+                    </div>
+                </div>
+                
+                <div class="cpp-execution">                    <div class="section-header">
+                        <h4>⚡ C++ Output</h4>
+                        <div class="buttons">
+                            <button id="run-cpp" class="btn btn-secondary">🔥 Run C++</button>
+                            <button id="clear-cpp-output" class="btn btn-secondary">🧹 Clear</button>
+                        </div>
+                    </div><div class="output-console" id="cpp-console">
+                        <div class="console-content" id="cpp-execution-output">Click "Run C++" to execute the C++ code</div>
+                    </div>                </div>
+            </div>
+        </div>        <div class="stats-section">
+            <div class="stats-header">
+                <h3>📊 Conversion Statistics</h3>
+                <button id="reset-stats" class="btn btn-outline btn-small">Reset Stats</button>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number" id="conversion-count">0</div>
+                    <div class="stat-label">Conversions</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="java-executions">0</div>
+                    <div class="stat-label">Java Runs</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="cpp-executions">0</div>
+                    <div class="stat-label">C++ Runs</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="success-rate">100%</div>
+                    <div class="stat-label">Success Rate</div>
+                </div>
+            </div>
+        </div>        <div class="features-section">
+            <h3>✨ Supported Features</h3>
+            <div class="features-grid">
+                <div class="feature feature-highlight">
+                    <div class="feature-icon">🔧</div>
+                    <div class="feature-content">
+                        <div class="feature-title">Static Methods & Functions</div>
+                        <div class="feature-description">Convert Java static methods to C++ functions</div>
+                    </div>
+                </div>
+                <div class="feature feature-highlight">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-content">
+                        <div class="feature-title">Basic Data Types</div>
+                        <div class="feature-description">int, char, float, double, string support</div>
+                    </div>
+                </div>
+                <div class="feature feature-highlight">
+                    <div class="feature-icon">🔄</div>
+                    <div class="feature-content">
+                        <div class="feature-title">All Loop Constructs</div>
+                        <div class="feature-description">for, while, do-while loops</div>
+                    </div>
+                </div>
+                <div class="feature feature-highlight">
+                    <div class="feature-icon">📋</div>
+                    <div class="feature-content">
+                        <div class="feature-title">1D Arrays</div>
+                        <div class="feature-description">Fixed-size array declarations and operations</div>
+                    </div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">⚡</div>
+                    <div class="feature-content">
+                        <div class="feature-title">Conditional Statements</div>
+                        <div class="feature-description">if-else chains and nested conditions</div>
+                    </div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🔀</div>
+                    <div class="feature-content">
+                        <div class="feature-title">Switch Statements</div>
+                        <div class="feature-description">Switch-case with break statements</div>
+                    </div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🧮</div>
+                    <div class="feature-content">
+                        <div class="feature-title">Mathematical Operations</div>
+                        <div class="feature-description">+, -, *, /, % operators</div>
+                    </div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🔗</div>
+                    <div class="feature-content">
+                        <div class="feature-title">Method Calls</div>
+                        <div class="feature-description">Function calls with parameters</div>
+                    </div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">📝</div>                    <div class="feature-content">
+                        <div class="feature-title">String Operations</div>
+                        <div class="feature-description">String concatenation in output statements</div>
+                    </div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🎯</div>
+                    <div class="feature-content">
+                        <div class="feature-title">Variable Declarations</div>
+                        <div class="feature-description">Variable declarations & assignments</div>
+                    </div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🔍</div>
+                    <div class="feature-content">
+                        <div class="feature-title">Comparison Operators</div>
+                        <div class="feature-description">>, <, ==, !=, <=, >= operators</div>
+                    </div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🔗</div>
+                    <div class="feature-content">
+                        <div class="feature-title">Logical Operators</div>
+                        <div class="feature-description">&& (AND), || (OR) operations</div>
+                    </div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🎯</div>
+                    <div class="feature-text">Variable declarations & assignments</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🔍</div>
+                    <div class="feature-text">Comparison operators (>, <, ==, !=)</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🔗</div>
+                    <div class="feature-text">Logical operators (&&, ||)</div>
+                </div>
+            </div>
+        </div>        <div class="limitations-section">
+            <h3>⚠️ Current Limitations</h3>
+            <div class="limitations-grid">
+                <div class="limitation limitation-warning">
+                    <div class="limitation-icon">🚫</div>
+                    <div class="limitation-content">
+                        <div class="limitation-title">2D/Multidimensional Arrays</div>
+                        <div class="limitation-description">Use 1D arrays with manual indexing instead</div>
+                    </div>
+                </div>
+                <div class="limitation limitation-warning">
+                    <div class="limitation-icon">🚫</div>
+                    <div class="limitation-content">
+                        <div class="limitation-title">Boolean Data Type</div>
+                        <div class="limitation-description">Use int with 0/1 values instead</div>
+                    </div>
+                </div>
+                <div class="limitation limitation-warning">
+                    <div class="limitation-icon">🚫</div>
+                    <div class="limitation-content">
+                        <div class="limitation-title">Array.length Property</div>
+                        <div class="limitation-description">Use fixed array sizes with constants</div>
+                    </div>
+                </div>
+                <div class="limitation limitation-info">
+                    <div class="limitation-icon">⚠️</div>
+                    <div class="limitation-content">
+                        <div class="limitation-title">Object-Oriented Features</div>
+                        <div class="limitation-description">Classes, inheritance, polymorphism not supported</div>
+                    </div>
+                </div>
+                <div class="limitation limitation-info">
+                    <div class="limitation-icon">⚠️</div>
+                    <div class="limitation-content">
+                        <div class="limitation-title">Complex Expressions</div>
+                        <div class="limitation-description">Some nested operations may need simplification</div>
+                    </div>
+                </div>
+                <div class="limitation limitation-info">
+                    <div class="limitation-icon">⚠️</div>
+                    <div class="limitation-content">
+                        <div class="limitation-title">Exception Handling</div>
+                        <div class="limitation-description">try-catch blocks not converted</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="comparison-section">
+            <h3>🔄 Code Comparison Examples</h3>
+            <div class="comparison-grid">
+                <div class="comparison-item">
+                    <div class="comparison-header">
+                        <span class="comparison-java">☕ Java</span>
+                        <span class="comparison-arrow">→</span>
+                        <span class="comparison-cpp">⚡ C++</span>
+                    </div>
+                    <div class="comparison-content">
+                        <div class="comparison-java-code">
+                            <pre><code class="language-java">System.out.println("Hello " + name);</code></pre>
+                        </div>
+                        <div class="comparison-cpp-code">
+                            <pre><code class="language-cpp">cout << "Hello " << name << endl;</code></pre>
+                        </div>
+                    </div>
+                </div>
+                <div class="comparison-item">
+                    <div class="comparison-header">
+                        <span class="comparison-java">☕ Java</span>
+                        <span class="comparison-arrow">→</span>
+                        <span class="comparison-cpp">⚡ C++</span>
+                    </div>
+                    <div class="comparison-content">
+                        <div class="comparison-java-code">
+                            <pre><code class="language-java">int[] arr = {1, 2, 3, 4, 5};</code></pre>
+                        </div>
+                        <div class="comparison-cpp-code">
+                            <pre><code class="language-cpp">int arr[] = {1, 2, 3, 4, 5};</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+                <div class="limitation">
+                    <div class="limitation-icon">❌</div>
+                    <div class="limitation-text">Object-oriented features (inheritance, etc.)</div>
+                </div>
+                <div class="limitation">
+                    <div class="limitation-icon">❌</div>
+                    <div class="limitation-text">Exception handling (try-catch)</div>
+                </div>
+                <div class="limitation">
+                    <div class="limitation-icon">❌</div>
+                    <div class="limitation-text">Generic types & collections</div>
+                </div>
+                <div class="limitation">
+                    <div class="limitation-icon">❌</div>
+                    <div class="limitation-text">Enhanced for loops (for-each)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tips-section">
+            <h3>💡 Usage Tips</h3>
+            <div class="tips-grid">
+                <div class="tip">
+                    <div class="tip-icon">💡</div>
+                    <div class="tip-content">
+                        <strong>Array Size:</strong> Use fixed array sizes instead of .length property
+                        <code>for (int i = 0; i < 5; i++)</code>
+                    </div>
+                </div>
+                <div class="tip">
+                    <div class="tip-icon">💡</div>
+                    <div class="tip-content">
+                        <strong>Boolean Logic:</strong> Use int with comparisons instead of boolean
+                        <code>int flag = 1; if (flag > 0)</code>
+                    </div>
+                </div>
+                <div class="tip">
+                    <div class="tip-icon">💡</div>
+                    <div class="tip-content">
+                        <strong>Negative Numbers:</strong> Avoid negative literals in method calls
+                        <code>int neg = 0 - 5; checkNumber(neg);</code>
+                    </div>
+                </div>
+                <div class="tip">
+                    <div class="tip-icon">💡</div>
+                    <div class="tip-content">
+                        <strong>Static Methods:</strong> Perfect for procedural programming style
+                        <code>public static int add(int a, int b)</code>
+                    </div>
+                </div>
+            </div>
+        </div>        <div id="error-message" class="error-message hidden"></div>
+        <div id="success-message" class="success-message hidden"></div>
+    </div>
+
+    <!-- Prism.js for syntax highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
