@@ -5,12 +5,15 @@ const fs = require('fs');
 const { exec } = require('child_process');
 const cors = require('cors');
 const JavaToCppConverter = require('./js-converter');
+const Judge0Service = require('./judge0-service');
 
 const app = express();
 let PORT = process.env.PORT || 3000;
 
 // Initialize the JavaScript converter as fallback
 const jsConverter = new JavaToCppConverter();
+// Initialize Judge0 service for code execution
+const judge0 = new Judge0Service();
 
 // Function to find available port (not needed on Vercel)
 const findAvailablePort = (port) => {
@@ -153,79 +156,38 @@ app.post('/api/execute', async (req, res) => {
             return res.status(400).json({ error: 'Language and code are required' });
         }
 
-        // Check if we're in Vercel environment
-        if (process.env.VERCEL) {
-            return res.status(400).json({ 
-                error: `Code execution is not available in the deployed environment due to security restrictions. This feature works in local development mode only.` 
+        console.log(`Executing ${language} code using Judge0...`);
+
+        try {
+            // Try Judge0 API first
+            const result = await judge0.executeCode(language, code);
+            
+            return res.json({
+                output: result.output,
+                executionTime: result.executionTime,
+                memoryUsed: result.memoryUsed,
+                status: result.status,
+                isError: result.isError
+            });
+
+        } catch (judge0Error) {
+            console.log('Judge0 failed, falling back to simulation:', judge0Error.message);
+            
+            // Fallback to simulation
+            const simulatedResult = judge0.simulateExecution(language, code);
+            
+            return res.json({
+                output: simulatedResult.output + '\n\n⚠️ Note: Using simulation - Judge0 API unavailable',
+                executionTime: simulatedResult.executionTime,
+                memoryUsed: simulatedResult.memoryUsed,
+                status: simulatedResult.status,
+                isError: simulatedResult.isError
             });
         }
-
-        // Create temporary files
-        const tempDir = process.env.VERCEL ? '/tmp' : path.join(__dirname, 'temp');
-        if (!fs.existsSync(tempDir)) {
-            fs.mkdirSync(tempDir, { recursive: true });
-        }
-
-        const timestamp = Date.now();
-        let sourceFile, executableFile, compileCommand, runCommand;
-
-        if (language === 'java') {
-            // Extract class name from Java code
-            const classMatch = code.match(/public\s+class\s+(\w+)/);
-            const className = classMatch ? classMatch[1] : 'Main';
-            
-            sourceFile = path.join(tempDir, `${className}.java`);
-            fs.writeFileSync(sourceFile, code);
-            
-            compileCommand = `javac "${sourceFile}"`;
-            runCommand = `cd "${tempDir}" && java ${className}`;
-        } else if (language === 'cpp') {
-            sourceFile = path.join(tempDir, `temp_${timestamp}.cpp`);
-            executableFile = path.join(tempDir, `temp_${timestamp}.exe`);
-            
-            fs.writeFileSync(sourceFile, code);
-            
-            compileCommand = `g++ -std=c++11 -o "${executableFile}" "${sourceFile}"`;
-            runCommand = `cd "${tempDir}" && .\\temp_${timestamp}.exe`;
-        } else {
-            return res.status(400).json({ error: 'Unsupported language' });
-        }
-
-        // Compile the code
-        exec(compileCommand, { shell: true, cwd: __dirname, timeout: 10000 }, (compileError, compileStdout, compileStderr) => {
-            if (compileError) {
-                // Clean up files
-                cleanupFiles([sourceFile, executableFile]);
-                
-                let errorMessage = 'Compilation failed';
-                if (compileStderr) {
-                    errorMessage += ':\\n' + compileStderr;
-                }
-                
-                return res.status(400).json({ error: errorMessage });
-            }
-
-            // Run the compiled code
-            exec(runCommand, { shell: true, cwd: __dirname, timeout: 5000 }, (runError, runStdout, runStderr) => {
-                // Clean up files
-                cleanupFiles([sourceFile, executableFile]);
-                
-                if (runError) {
-                    let errorMessage = 'Runtime error';
-                    if (runStderr) {
-                        errorMessage += ':\\n' + runStderr;
-                    }
-                    return res.status(400).json({ error: errorMessage });
-                }
-
-                const output = runStdout || 'Program executed successfully (no output)';
-                res.json({ output });
-            });
-        });
 
     } catch (error) {
         console.error('Execution error:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: `Execution failed: ${error.message}` });
     }
 });
 
