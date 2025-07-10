@@ -153,6 +153,13 @@ app.post('/api/execute', async (req, res) => {
             return res.status(400).json({ error: 'Language and code are required' });
         }
 
+        // Check if we're in Vercel environment
+        if (process.env.VERCEL) {
+            return res.status(400).json({ 
+                error: `Code execution is not available in the deployed environment due to security restrictions. This feature works in local development mode only.` 
+            });
+        }
+
         // Create temporary files
         const tempDir = process.env.VERCEL ? '/tmp' : path.join(__dirname, 'temp');
         if (!fs.existsSync(tempDir)) {
@@ -172,7 +179,7 @@ app.post('/api/execute', async (req, res) => {
             
             compileCommand = `javac "${sourceFile}"`;
             runCommand = `cd "${tempDir}" && java ${className}`;
-              } else if (language === 'cpp') {
+        } else if (language === 'cpp') {
             sourceFile = path.join(tempDir, `temp_${timestamp}.cpp`);
             executableFile = path.join(tempDir, `temp_${timestamp}.exe`);
             

@@ -528,6 +528,33 @@ textarea:focus {
     gap: var(--spacing-lg);
 }
 
+/* Notice banner */
+.notice-banner {
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-md);
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: var(--border-radius-md);
+    backdrop-filter: blur(10px);
+}
+
+.notice-content {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.notice-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.notice-text {
+    line-height: 1.5;
+}
+
 .java-execution,
 .cpp-execution {
     background: var(--glass-bg);

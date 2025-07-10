@@ -301,6 +301,12 @@ class JavaToCppConverter {
 
             if (!response.ok) {
                 const errorData = await response.json();
+                
+                // Check if it's the "not available in deployed environment" error
+                if (errorData.error && errorData.error.includes('not available in the deployed environment')) {
+                    throw new Error('Code execution is disabled in the live demo for security reasons. Download the project to run code locally.');
+                }
+                
                 throw new Error(errorData.error || 'Execution failed');
             }
 
@@ -308,7 +314,7 @@ class JavaToCppConverter {
             return result.output || 'Program executed successfully (no output)';
         } catch (error) {
             if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                throw new Error('Unable to connect to execution service. Running in demo mode.');
+                throw new Error('Unable to connect to execution service. This feature is available only in local development.');
             }
             throw error;
         }
