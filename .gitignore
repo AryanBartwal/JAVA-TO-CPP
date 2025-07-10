@@ -34,3 +34,25 @@ Thumbs.db
 *.pdb
 *.obj
 *.o
+
+# Node.js dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Vercel
+.vercel
+
+# Temporary folders
+tmp/
+temp/
+
+# Logs
+logs
+*.log

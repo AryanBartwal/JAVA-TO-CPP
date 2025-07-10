@@ -4,12 +4,19 @@ const path = require('path');
 const fs = require('fs');
 const { exec } = require('child_process');
 const cors = require('cors');
+const JavaToCppConverter = require('./js-converter');
 
 const app = express();
 let PORT = process.env.PORT || 3000;
 
-// Function to find available port
+// Initialize the JavaScript converter as fallback
+const jsConverter = new JavaToCppConverter();
+
+// Function to find available port (not needed on Vercel)
 const findAvailablePort = (port) => {
+    if (process.env.VERCEL) {
+        return Promise.resolve(port);
+    }
     return new Promise((resolve, reject) => {
         const server = require('net').createServer();
         server.listen(port, (err) => {
@@ -28,15 +35,23 @@ const findAvailablePort = (port) => {
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
-app.use(express.static('frontend'));
 
-// Serve the frontend
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
-});
+// Serve static files differently based on environment
+if (process.env.VERCEL) {
+    // On Vercel, static files are served by the platform
+    app.get('/', (req, res) => {
+        res.redirect('/frontend/');
+    });
+} else {
+    // Local development
+    app.use(express.static('frontend'));
+    app.get('/', (req, res) => {
+        res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
+    });
+}
 
 // Conversion endpoint
-app.post('/convert', async (req, res) => {
+app.post('/api/convert', async (req, res) => {
     try {
         const { javaCode } = req.body;
         
@@ -45,21 +60,49 @@ app.post('/convert', async (req, res) => {
         }
 
         // Create temporary files
-        const tempDir = path.join(__dirname, 'temp');
+        const tempDir = process.env.VERCEL ? '/tmp' : path.join(__dirname, 'temp');
         if (!fs.existsSync(tempDir)) {
             fs.mkdirSync(tempDir, { recursive: true });
         }
 
         const timestamp = Date.now();
         const javaFile = path.join(tempDir, `temp_${timestamp}.java`);
-        const cppFile = path.join(tempDir, `temp_${timestamp}.cpp`);
 
         // Write Java code to temporary file
         fs.writeFileSync(javaFile, javaCode);
 
         // Execute your java2cpp converter
-        const converterPath = path.join(__dirname, 'java2cpp.exe');
-        const command = `type "${javaFile}" | "${converterPath}"`;
+        const converterPath = process.env.VERCEL ? 
+            path.join(__dirname, 'java2cpp') : // Unix executable on Vercel
+            path.join(__dirname, 'java2cpp.exe'); // Windows executable locally
+        
+        // Check if native converter exists
+        if (!fs.existsSync(converterPath)) {
+            console.log('Native converter not found, using JavaScript fallback');
+            try {
+                const cppCode = jsConverter.convert(javaCode);
+                
+                // Clean up temporary file
+                if (fs.existsSync(javaFile)) {
+                    fs.unlinkSync(javaFile);
+                }
+                
+                return res.json({ cppCode });
+            } catch (jsError) {
+                // Clean up temporary file
+                if (fs.existsSync(javaFile)) {
+                    fs.unlinkSync(javaFile);
+                }
+                return res.status(400).json({ error: `JavaScript converter failed: ${jsError.message}` });
+            }
+        }
+        
+        let command;
+        if (process.platform === 'win32') {
+            command = `type "${javaFile}" | "${converterPath}"`;
+        } else {
+            command = `cat "${javaFile}" | "${converterPath}"`;
+        }
 
         exec(command, { shell: true, cwd: __dirname }, (error, stdout, stderr) => {
             try {
@@ -104,7 +147,7 @@ app.post('/convert', async (req, res) => {
 });
 
 // Code execution endpoint
-app.post('/execute', async (req, res) => {
+app.post('/api/execute', async (req, res) => {
     try {
         const { language, code } = req.body;
         
@@ -113,7 +156,7 @@ app.post('/execute', async (req, res) => {
         }
 
         // Create temporary files
-        const tempDir = path.join(__dirname, 'temp');
+        const tempDir = process.env.VERCEL ? '/tmp' : path.join(__dirname, 'temp');
         if (!fs.existsSync(tempDir)) {
             fs.mkdirSync(tempDir, { recursive: true });
         }
@@ -194,7 +237,7 @@ function cleanupFiles(files) {
 }
 
 // Health check endpoint
-app.get('/health', (req, res) => {
+app.get('/api/health', (req, res) => {
     res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 

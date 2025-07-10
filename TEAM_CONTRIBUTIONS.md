@@ -7,7 +7,7 @@ A comprehensive Java-to-C++ converter built with Flex/Bison that transforms Java
 
 ## 👥 Team Members & Contributions
 
-### 🏆 **Team Lead & Project Architect**
+### 🏆 **Aryan** - Team Lead & Project Architect*
 **Lines: 1-70, 780-785 + Overall Architecture**
 
 #### Core Responsibilities:
@@ -194,7 +194,7 @@ ID LSQUARE expr RSQUARE ASSIGN expr SEMICOLON {
 
 | Team Member | Lines of Code | Key Components | Complexity Level |
 |-------------|---------------|----------------|------------------|
-| **Team Lead** | ~100 lines | Architecture, Tokens, Integration | ⭐⭐⭐⭐⭐ |
+| **Aryan** | ~100 lines | Architecture, Tokens, Integration | ⭐⭐⭐⭐⭐ |
 | **Ajay** | ~145 lines | Classes, Methods, Program Structure | ⭐⭐⭐⭐ |
 | **Akash** | ~90 lines | Types, Parameters, Memory Management | ⭐⭐⭐⭐ |
 | **Ajeet** | ~300 lines | Statements, Control Flow, Arrays | ⭐⭐⭐⭐⭐ |

@@ -131,7 +131,7 @@ class JavaToCppConverter {
     }    async simulateConversion(javaCode) {
         // Real implementation calling the backend
         try {
-            const response = await fetch('/convert', {
+            const response = await fetch('/api/convert', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -291,7 +291,7 @@ class JavaToCppConverter {
 
     async executeCode(language, code) {
         try {
-            const response = await fetch('/execute', {
+            const response = await fetch('/api/execute', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
