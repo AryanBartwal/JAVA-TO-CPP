@@ -38,10 +38,8 @@ app.use(express.json({ limit: '10mb' }));
 
 // Serve static files differently based on environment
 if (process.env.VERCEL) {
-    // On Vercel, static files are served by the platform
-    app.get('/', (req, res) => {
-        res.redirect('/frontend/');
-    });
+    // On Vercel, we don't need to serve static files from the server
+    // They are handled by the routing configuration
 } else {
     // Local development
     app.use(express.static('frontend'));
