@@ -1,7 +1,7 @@
 # Java-to-C++ Converter
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-🚀%20Try%20Now-brightgreen)](https://your-project-domain.vercel.app)
-[![GitHub](https://img.shields.io/badge/GitHub-Repository-blue)](https://github.com/yourusername/java-to-cpp)
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-blue)](https://github.com/AryanBartwal/JAVA-TO-CPP)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A professional-grade Java-to-C++ transpiler featuring an advanced web interface and command-line tools. Built with Flex/Bison for robust parsing and accurate code conversion.
@@ -70,7 +70,7 @@ Access at: `http://localhost:3000`
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/java-to-cpp.git
+git clone https://github.com/AryanBartwal/JAVA-TO-CPP.git
 cd java-to-cpp
 
 # Install dependencies
@@ -307,7 +307,7 @@ We welcome contributions from the developer community!
 ### Development Setup
 ```bash
 # Fork and clone the repository
-git clone https://github.com/yourusername/java-to-cpp.git
+git clone https://github.com/AryanBartwal/JAVA-TO-CPP.git
 cd java-to-cpp
 
 # Install dependencies
@@ -337,9 +337,9 @@ npm test
 ## � Support & Contact
 
 ### Getting Help
-- 📋 **Issues**: [GitHub Issues](https://github.com/yourusername/java-to-cpp/issues)
+- 📋 **Issues**: [GitHub Issues](https://github.com/AryanBartwal/JAVA-TO-CPP/issues)
 - 📚 **Documentation**: Comprehensive guides in this README
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/yourusername/java-to-cpp/discussions)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/AryanBartwal/JAVA-TO-CPP/discussions)
 
 ### Professional Contact
 - 🌐 **Portfolio**: [yourportfolio.com](https://yourportfolio.com)
@@ -362,8 +362,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 <div align="center">
 
 **[🚀 Try Live Demo](https://your-project-domain.vercel.app)** | 
-**[⭐ Star on GitHub](https://github.com/yourusername/java-to-cpp)** | 
-**[📖 Documentation](https://github.com/yourusername/java-to-cpp/wiki)**
+**[⭐ Star on GitHub](https://github.com/AryanBartwal/JAVA-TO-CPP)** | 
+**[📖 Documentation](https://github.com/AryanBartwal/JAVA-TO-CPP/wiki)**
 
 *Built with ❤️ for the developer community*
 
