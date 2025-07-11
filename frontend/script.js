@@ -148,7 +148,8 @@ class JavaToCppConverter {
             return result.cppCode;
         } catch (error) {
             if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                throw new Error('Unable to connect to conversion service. Please check if the backend is running.');
+                // Fallback to basic conversion if API is not available
+                return this.basicJavaToCppConversion(javaCode);
             }
             throw error;
         }
@@ -301,25 +302,20 @@ class JavaToCppConverter {
 
             if (!response.ok) {
                 const errorData = await response.json();
+                
+                // Check if it's the "not available in deployed environment" error
+                if (errorData.error && errorData.error.includes('not available in the deployed environment')) {
+                    throw new Error('Code execution is disabled in the live demo for security reasons. Download the project to run code locally.');
+                }
+                
                 throw new Error(errorData.error || 'Execution failed');
             }
 
             const result = await response.json();
-            
-            // Format the output with execution details
-            let output = result.output || 'Program executed successfully (no output)';
-            
-            if (result.executionTime || result.memoryUsed) {
-                output += '\n\n--- Execution Details ---';
-                if (result.executionTime) output += `\nExecution Time: ${result.executionTime}`;
-                if (result.memoryUsed) output += `\nMemory Used: ${result.memoryUsed}`;
-                if (result.status) output += `\nStatus: ${result.status}`;
-            }
-            
-            return output;
+            return result.output || 'Program executed successfully (no output)';
         } catch (error) {
             if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                throw new Error('Unable to connect to execution service. Please check your internet connection.');
+                throw new Error('Unable to connect to execution service. This feature is available only in local development.');
             }
             throw error;
         }
