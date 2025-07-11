@@ -1,5 +1,6 @@
 # Build artifacts
 *.exe
+*.class
 java2cpp.exe
 a.exe
 test.exe
@@ -17,6 +18,12 @@ lex.yy.c
 parser.tab.c
 parser.tab.h
 
+# Temporary directories and files
+temp/
+*.tmp
+*.temp
+*.bak
+
 # IDE files
 .vscode/
 .vs/
@@ -24,11 +31,6 @@ parser.tab.h
 # OS files
 .DS_Store
 Thumbs.db
-
-# Temporary files
-*.tmp
-*.temp
-*.bak
 
 # Debug files
 *.pdb
@@ -48,6 +50,20 @@ yarn-error.log*
 
 # Vercel
 .vercel
+
+# Build scripts (redundant)
+build.ps1
+build.sh
+start_*.bat
+
+# Documentation drafts
+README_*.md
+TEAM_*.md
+DEPLOYMENT.md
+
+# Test files (keep only essential ones)
+*Test*.java
+*test*.class
 
 # Temporary folders
 tmp/
