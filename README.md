@@ -3,8 +3,9 @@
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-🚀%20Try%20Now-brightgreen)](https://your-project-domain.vercel.app)
 [![GitHub](https://img.shields.io/badge/GitHub-Repository-blue)](https://github.com/AryanBartwal/JAVA-TO-CPP)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+- 🔍 **Bug Fixes**: Resolve existing issues
 
-A professional-grade Java-to-C++ transpiler featuring an advanced web interface and command-line tools. Built with Flex/Bison for robust parsing and accurate code conversion.
+## 🙏 Acknowledgmentsde Java-to-C++ transpiler featuring an advanced web interface and command-line tools. Built with Flex/Bison for robust parsing and accurate code conversion.
 
 ## 🌐 Live Application
 
